@@ -46,7 +46,52 @@ def show_safe_diagnostics(diagnostics: dict | None) -> None:
         )
 
 
+def render_agent_trace(trace: list[dict], diagnostics: dict | None = None) -> None:
+    for entry in trace:
+        st.markdown(
+            f"**Step {entry.get('step')} · {entry.get('tool_name')} · {entry.get('status')}**"
+        )
+        safe_args = entry.get("arguments", {})
+        if safe_args:
+            st.caption("Arguments: " + str(safe_args))
+        if entry.get("message"):
+            st.caption(entry["message"])
+        for reference in entry.get("references", []):
+            line_range = ""
+            if reference.get("start_line") is not None:
+                line_range = f" lines {reference['start_line']}-{reference['end_line']}"
+            st.caption(f"{reference['path']}{line_range} · commit {reference['commit_sha']}")
+    if diagnostics:
+        st.caption(
+            "Model response diagnostics: "
+            f"type={diagnostics.get('response_type')}, "
+            f"finish={diagnostics.get('finish_reason')}, "
+            f"tool_calls={diagnostics.get('tool_call_count')}, "
+            f"parsing={diagnostics.get('parsing_status')}, "
+            f"error={diagnostics.get('error_category')}"
+        )
+        st.caption(
+            "Context budget: "
+            f"estimated={diagnostics.get('estimated_context_tokens')}, "
+            f"unique evidence chunks={diagnostics.get('unique_evidence_chunks')}, "
+            f"duplicate evidence chunks={diagnostics.get('duplicate_evidence_chunks')}, "
+            f"remaining after answer reserve={diagnostics.get('remaining_context_tokens')}, "
+            f"termination={diagnostics.get('termination_reason')}, "
+            f"token estimates by request/tool-result={diagnostics.get('context_token_history', [])}"
+        )
+        if diagnostics.get("http_status") is not None:
+            st.caption(
+                "Provider error metadata: "
+                f"HTTP {diagnostics.get('http_status')}, "
+                f"type={diagnostics.get('api_error_type')}, "
+                f"code={diagnostics.get('api_error_code')}, "
+                f"parameter={diagnostics.get('api_error_param')}, "
+                f"request ID={diagnostics.get('request_id')}"
+            )
+
+
 provider_status = load_provider_status()
+agent_enabled = bool(provider_status and provider_status.get("agent_enabled"))
 if provider_status:
     st.caption(provider_status["message"])
 else:
@@ -86,6 +131,7 @@ if submitted:
                 st.session_state["repository_url"] = repository_url.strip()
                 st.session_state.pop("repository_analysis", None)
                 st.session_state["question_history"] = []
+                st.session_state["agent_history"] = []
 
 inspection = st.session_state.get("inspection")
 if inspection:
@@ -235,5 +281,65 @@ if inspection:
                             f"({citation['citation_url']}) · commit "
                             f"`{citation['commit_sha']}`"
                         )
+
+    st.subheader("Read-only agent")
+    if not agent_enabled:
+        st.info(
+            "Agent mode is disabled. Enable AGENT_ENABLED in the FastAPI environment to opt in."
+        )
+    with st.form("agent_question_form", clear_on_submit=True):
+        agent_question = st.text_input(
+            "Question for the repository agent",
+            placeholder="Trace how configuration is loaded and used.",
+        )
+        agent_submitted = st.form_submit_button("Run agent", disabled=not agent_enabled)
+    if agent_submitted:
+        if not agent_question.strip():
+            st.error("Enter a question for the repository agent.")
+        else:
+            with st.spinner("The read-only agent is inspecting repository evidence…"):
+                try:
+                    agent_response = httpx.post(
+                        f"{API_BASE_URL}/api/repos/agent",
+                        json={
+                            "repository_url": st.session_state["repository_url"],
+                            "question": agent_question.strip(),
+                        },
+                        timeout=180,
+                    )
+                except httpx.TimeoutException:
+                    st.error("The agent request timed out. Please try again.")
+                except httpx.RequestError:
+                    st.error("Could not reach the FastAPI service. Start the API and try again.")
+                else:
+                    try:
+                        agent_result = agent_response.json()
+                    except ValueError:
+                        agent_result = {}
+                    if agent_response.is_error:
+                        st.error(agent_result.get("detail", "The agent request failed."))
+                        if agent_result.get("trace"):
+                            with st.expander("Agent tool trace"):
+                                render_agent_trace(
+                                    agent_result["trace"], agent_result.get("diagnostics")
+                                )
+                        elif agent_result.get("diagnostics"):
+                            render_agent_trace([], agent_result["diagnostics"])
+                    else:
+                        history = st.session_state.setdefault("agent_history", [])
+                        history.append((agent_question.strip(), agent_result))
+
+    for agent_asked_question, agent_result in reversed(st.session_state.get("agent_history", [])):
+        with st.container(border=True):
+            st.markdown(f"**Agent question:** {agent_asked_question}")
+            if not agent_result["context_sufficient"]:
+                st.warning("The agent could not establish sufficient repository evidence.")
+            st.markdown(agent_result["answer"])
+            st.caption(
+                f"Commit `{agent_result['commit_sha']}` · {agent_result['steps']} steps · "
+                f"{agent_result['tool_calls']} tool calls"
+            )
+            with st.expander("Agent tool trace"):
+                render_agent_trace(agent_result.get("trace", []), agent_result.get("diagnostics"))
 
 st.divider()

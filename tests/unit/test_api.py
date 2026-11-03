@@ -220,6 +220,26 @@ async def test_qa_endpoint_rejects_blank_questions() -> None:
 
 
 @pytest.mark.asyncio
+async def test_agent_endpoint_is_explicitly_disabled_by_default() -> None:
+    app = create_app(provider=MockLLMProvider(), settings=Settings(_env_file=None))
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
+        status = await client.get("/api/status")
+        response = await client.post(
+            "/api/repos/agent",
+            json={
+                "repository_url": "https://github.com/o/r",
+                "question": "Inspect source",
+            },
+        )
+
+    assert status.json()["agent_enabled"] is False
+    assert response.status_code == 503
+    assert response.json()["code"] == "agent_disabled"
+
+
+@pytest.mark.asyncio
 async def test_provider_status_is_accurate_and_never_exposes_credentials() -> None:
     settings = Settings(
         _env_file=None,

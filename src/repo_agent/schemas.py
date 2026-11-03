@@ -1,8 +1,10 @@
 """Public API response schemas."""
 
+from typing import Literal
+
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
-from repo_agent.providers.base import ProviderDiagnostics
+from repo_agent.providers.base import AgentTurnDiagnostics, ProviderDiagnostics
 
 
 class InspectRequest(BaseModel):
@@ -82,3 +84,33 @@ class RepositoryAnalysisResponse(BaseModel):
     prompt_chunks: list[RAGChunkReference] = Field(default_factory=list)
     diagnostics: ProviderDiagnostics | None = None
     error_code: str | None = None
+
+
+class AgentFileReference(BaseModel):
+    path: str
+    commit_sha: str
+    chunk_id: str | None = None
+    start_line: int | None = None
+    end_line: int | None = None
+
+
+class AgentTraceEntry(BaseModel):
+    step: int
+    tool_name: str
+    arguments: dict[str, str | list[str]] = Field(default_factory=dict)
+    status: Literal["success", "error", "repeated"]
+    references: list[AgentFileReference] = Field(default_factory=list)
+    message: str | None = None
+
+
+class AgentResponse(BaseModel):
+    full_name: str
+    commit_sha: str
+    answer: str
+    context_sufficient: bool
+    citations: list[SourceCitation] = Field(default_factory=list)
+    trace: list[AgentTraceEntry] = Field(default_factory=list)
+    steps: int
+    tool_calls: int
+    error_code: str | None = None
+    diagnostics: AgentTurnDiagnostics | None = None

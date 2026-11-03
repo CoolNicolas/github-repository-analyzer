@@ -9,11 +9,14 @@ import httpx
 from pydantic import ValidationError
 
 from repo_agent.providers.base import (
+    AgentTurnDiagnostics,
     LLMProvider,
     LLMProviderError,
+    ProviderAgentTurn,
     ProviderCitation,
     ProviderDiagnostics,
     ProviderResult,
+    ProviderToolCall,
 )
 from repo_agent.providers.mock import MockLLMProvider
 from repo_agent.settings import Settings
@@ -52,6 +55,17 @@ token, or a cookie. Check each factual statement against the supplied excerpts a
 other statements in your answer. Resolve apparent conflicts only when the supplied evidence does;
 otherwise state what is unsupported or uncertain and set sufficient_context to false when the
 uncertainty prevents a reliable answer."""
+
+AGENT_FINAL_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "answer": {"type": "string"},
+        "sufficient_context": {"type": "boolean"},
+        "citation_chunk_ids": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["answer", "sufficient_context", "citation_chunk_ids"],
+    "additionalProperties": False,
+}
 
 
 class OpenAICompatibleProvider:
@@ -127,6 +141,377 @@ class OpenAICompatibleProvider:
         prompt = f"Question: {question}\n\nRepository context:\n{context}"
         return await self._complete(
             prompt, max_output_tokens=max_output_tokens, citation_mode=citation_mode
+        )
+
+    async def agent_turn(
+        self,
+        messages: list[dict[str, object]],
+        tools: list[dict[str, object]],
+        *,
+        max_output_tokens: int,
+        tool_choice: Literal["auto", "none"] = "auto",
+    ) -> ProviderAgentTurn:
+        """Use native tool_calls and a separate structured final-answer channel."""
+        headers = {"Accept": "application/json"}
+        if self.settings.llm_api_key is not None:
+            key = self.settings.llm_api_key.get_secret_value().strip()
+            if key:
+                headers["Authorization"] = f"Bearer {key}"
+        body: dict[str, object] = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": max_output_tokens,
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "repository_agent_final_answer",
+                    "strict": True,
+                    "schema": AGENT_FINAL_RESPONSE_SCHEMA,
+                },
+            },
+        }
+        if tool_choice == "auto" and tools:
+            body["tools"] = tools
+            body["tool_choice"] = "auto"
+        # With no tools, Chat Completions defaults tool_choice to "none". Omitting the
+        # redundant field is more compatible with OpenAI-style endpoints that reject it.
+        try:
+            async with httpx.AsyncClient(
+                base_url=f"{self.base_url}/",
+                timeout=httpx.Timeout(self.settings.llm_request_timeout_seconds),
+                transport=self.transport,
+                headers=headers,
+            ) as client:
+                response = await client.post("chat/completions", json=body)
+                if self._rejects_json_mode(response):
+                    if body["response_format"].get("type") == "json_schema":
+                        body["response_format"] = {"type": "json_object"}
+                        response = await client.post("chat/completions", json=body)
+                    if self._rejects_json_mode(response):
+                        body.pop("response_format")
+                        response = await client.post("chat/completions", json=body)
+        except httpx.TimeoutException as exc:
+            raise LLMProviderError(
+                "The agent model request timed out.", status_code=504, code="llm_timeout"
+            ) from exc
+        except httpx.RequestError as exc:
+            raise LLMProviderError(
+                "Could not connect to the configured agent model.",
+                status_code=502,
+                code="llm_network_error",
+            ) from exc
+
+        error_metadata = self._safe_error_metadata(response)
+        if response.status_code == 429:
+            raise LLMProviderError(
+                "The agent model rate limit was reached.",
+                status_code=503,
+                code="llm_rate_limited",
+                agent_diagnostics=self._agent_error_diagnostics(
+                    response, error_metadata, "rate_limited"
+                ),
+            )
+        if response.status_code in {400, 422} and (
+            error_metadata["param"] == "response_format" or self._rejects_json_mode(response)
+        ):
+            error_category = self._request_error_category(response, error_metadata)
+            error_code = (
+                "llm_agent_response_format_unsupported"
+                if error_category == "unsupported_response_format"
+                else "llm_invalid_request"
+            )
+            raise LLMProviderError(
+                "The model endpoint rejected JSON response formatting after compatible "
+                "fallbacks were attempted.",
+                status_code=502,
+                code=error_code,
+                agent_diagnostics=self._agent_error_diagnostics(
+                    response, error_metadata, error_category
+                ),
+            )
+        if (
+            response.status_code in {400, 422}
+            and error_metadata["param"] != "tool_choice"
+            and self._rejects_tool_calling(response)
+        ):
+            raise LLMProviderError(
+                "The configured model endpoint does not support the required "
+                "tool-calling protocol.",
+                status_code=502,
+                code="llm_tool_call_unsupported",
+                agent_diagnostics=self._agent_error_diagnostics(
+                    response, error_metadata, "tool_calling_unsupported"
+                ),
+            )
+        if response.status_code in {401, 403}:
+            raise LLMProviderError(
+                "The agent model rejected the configured credentials.",
+                status_code=502,
+                code="llm_auth_error",
+                agent_diagnostics=self._agent_error_diagnostics(
+                    response, error_metadata, "authentication_failed"
+                ),
+            )
+        if response.is_error:
+            error_category = self._request_error_category(response, error_metadata)
+            raise LLMProviderError(
+                f"The agent model returned HTTP {response.status_code}.",
+                status_code=502,
+                code="llm_invalid_request"
+                if response.status_code in {400, 422}
+                else "llm_upstream_error",
+                agent_diagnostics=self._agent_error_diagnostics(
+                    response, error_metadata, error_category
+                ),
+            )
+
+        response_type = "invalid_response"
+        finish_reason: str | None = None
+        tool_call_count = 0
+        try:
+            payload = response.json()
+            choice = payload["choices"][0]
+            finish_reason = choice.get("finish_reason")
+            message = choice["message"]
+            if not isinstance(message, dict):
+                raise TypeError("assistant message must be an object")
+            refusal = message.get("refusal")
+            if refusal or finish_reason == "content_filter":
+                diagnostics = AgentTurnDiagnostics(
+                    response_type="refusal",
+                    finish_reason=finish_reason,
+                    tool_call_count=0,
+                    parsing_status="refused",
+                    error_category="provider_refusal",
+                )
+                raise LLMProviderError(
+                    "The agent model refused or filtered the response.",
+                    status_code=502,
+                    code="llm_agent_refusal",
+                    agent_diagnostics=diagnostics,
+                )
+            if finish_reason == "length":
+                diagnostics = AgentTurnDiagnostics(
+                    response_type="truncated",
+                    finish_reason=finish_reason,
+                    tool_call_count=0,
+                    parsing_status="truncated",
+                    error_category="output_token_limit",
+                )
+                raise LLMProviderError(
+                    "The agent model response was truncated at the output-token limit. "
+                    "Increase LLM_MAX_OUTPUT_TOKENS and retry.",
+                    status_code=502,
+                    code="llm_agent_truncated_response",
+                    agent_diagnostics=diagnostics,
+                )
+            raw_calls = message.get("tool_calls") or []
+            if not isinstance(raw_calls, list):
+                raise TypeError("tool_calls must be an array")
+            if raw_calls:
+                response_type = "protocol_tool_calls"
+                tool_call_count = len(raw_calls)
+                if len(raw_calls) > self.settings.agent_max_tool_calls:
+                    raise TypeError("provider returned more tool calls than the configured limit")
+                calls: list[ProviderToolCall] = []
+                for raw_call in raw_calls:
+                    if not isinstance(raw_call, dict):
+                        raise TypeError("tool call entry must be an object")
+                    if raw_call.get("type") != "function":
+                        raise TypeError("tool call type was not function")
+                    function = raw_call["function"]
+                    args_text = function["arguments"]
+                    if not isinstance(args_text, str) or len(args_text) > 8_192:
+                        raise TypeError("tool arguments must be JSON text")
+                    arguments = json.loads(args_text)
+                    if not isinstance(arguments, dict):
+                        raise TypeError("tool arguments must be a JSON object")
+                    calls.append(
+                        ProviderToolCall(
+                            id=raw_call["id"],
+                            name=function["name"],
+                            arguments=arguments,
+                        )
+                    )
+                return ProviderAgentTurn(
+                    tool_calls=calls,
+                    diagnostics=AgentTurnDiagnostics(
+                        response_type=response_type,
+                        finish_reason=finish_reason,
+                        tool_call_count=len(calls),
+                        parsing_status="parsed",
+                    ),
+                )
+            if finish_reason == "tool_calls":
+                raise TypeError("finish_reason declared tool calls but none were present")
+            content = self._message_text(message.get("content"))
+            try:
+                parsed = self._parse_structured_answer(content)
+            except json.JSONDecodeError as exc:
+                if content.strip().startswith(("{", "[", "```")):
+                    diagnostics = AgentTurnDiagnostics(
+                        response_type="invalid_json",
+                        finish_reason=finish_reason,
+                        tool_call_count=0,
+                        parsing_status="invalid_json",
+                        error_category="invalid_final_json",
+                    )
+                    raise LLMProviderError(
+                        "The agent model returned malformed final JSON.",
+                        status_code=502,
+                        code="llm_agent_invalid_final_json",
+                        agent_diagnostics=diagnostics,
+                    ) from exc
+                return ProviderAgentTurn(
+                    final_result=ProviderResult(
+                        answer=content.strip(),
+                        sufficient_context=False,
+                        citation_chunk_ids=[],
+                    ),
+                    diagnostics=AgentTurnDiagnostics(
+                        response_type="ordinary_text",
+                        finish_reason=finish_reason,
+                        tool_call_count=0,
+                        parsing_status="unstructured_text_marked_insufficient",
+                        error_category="missing_structured_final_answer",
+                    ),
+                )
+            response_type = "structured_json"
+            diagnostics = AgentTurnDiagnostics(
+                response_type=response_type,
+                finish_reason=finish_reason,
+                tool_call_count=0,
+                parsing_status="parsed",
+            )
+            try:
+                final = self._normalize_result(parsed, citation_mode="chunk_ids")
+            except LLMProviderError as exc:
+                exc.agent_diagnostics = diagnostics.model_copy(
+                    update={
+                        "parsing_status": "schema_rejected",
+                        "error_category": exc.code,
+                    }
+                )
+                raise
+            return ProviderAgentTurn(final_result=final, diagnostics=diagnostics)
+        except LLMProviderError as exc:
+            if exc.agent_diagnostics is None:
+                exc.agent_diagnostics = AgentTurnDiagnostics(
+                    response_type=response_type,
+                    finish_reason=finish_reason,
+                    tool_call_count=tool_call_count,
+                    parsing_status="failed",
+                    error_category=exc.code,
+                )
+            raise
+        except (
+            AttributeError,
+            KeyError,
+            IndexError,
+            TypeError,
+            ValueError,
+            ValidationError,
+        ) as exc:
+            malformed_tool_call = response_type == "protocol_tool_calls"
+            raise LLMProviderError(
+                "The model returned a malformed protocol tool call."
+                if malformed_tool_call
+                else "The model returned an invalid agent response. Expected protocol tool calls "
+                "or a final answer using the canonical JSON schema.",
+                status_code=502,
+                code=(
+                    "llm_agent_malformed_tool_call"
+                    if malformed_tool_call
+                    else "llm_agent_invalid_response"
+                ),
+                agent_diagnostics=AgentTurnDiagnostics(
+                    response_type=response_type,
+                    finish_reason=finish_reason,
+                    tool_call_count=tool_call_count,
+                    parsing_status="failed",
+                    error_category=(
+                        "malformed_tool_call"
+                        if malformed_tool_call
+                        else "invalid_protocol_response"
+                    ),
+                ),
+            ) from exc
+
+    @staticmethod
+    def _rejects_tool_calling(response: httpx.Response) -> bool:
+        try:
+            detail = json.dumps(response.json()).casefold()
+        except (ValueError, TypeError):
+            detail = response.text.casefold()
+        mentions_tools = any(term in detail for term in ("tools", "tool_choice", "function call"))
+        rejects_tools = any(
+            term in detail for term in ("unsupported", "not support", "unrecognized", "unknown")
+        )
+        return mentions_tools and rejects_tools
+
+    @staticmethod
+    def _safe_error_metadata(response: httpx.Response) -> dict[str, str | None]:
+        try:
+            payload = response.json()
+        except (ValueError, TypeError):
+            payload = {}
+        error = payload.get("error", {}) if isinstance(payload, dict) else {}
+        if not isinstance(error, dict):
+            error = {}
+
+        def safe_value(value: object, pattern: str, limit: int = 120) -> str | None:
+            if not isinstance(value, str):
+                return None
+            candidate = value.strip()
+            return (
+                candidate if len(candidate) <= limit and re.fullmatch(pattern, candidate) else None
+            )
+
+        return {
+            "code": safe_value(error.get("code"), r"[A-Za-z0-9_.-]+"),
+            "type": safe_value(error.get("type"), r"[A-Za-z0-9_.-]+"),
+            "param": safe_value(error.get("param"), r"[A-Za-z0-9_.\[\]-]+"),
+            "request_id": safe_value(response.headers.get("x-request-id"), r"[A-Za-z0-9_.:-]+"),
+        }
+
+    @staticmethod
+    def _request_error_category(response: httpx.Response, metadata: dict[str, str | None]) -> str:
+        param = metadata["param"] or ""
+        if param == "tool_choice":
+            return "invalid_tool_choice"
+        if param == "response_format" or OpenAICompatibleProvider._rejects_json_mode(response):
+            code = (metadata["code"] or "").casefold()
+            return (
+                "unsupported_response_format"
+                if (
+                    "unsupported" in code
+                    or "not_supported" in code
+                    or OpenAICompatibleProvider._rejects_json_mode(response)
+                )
+                else "invalid_response_format"
+            )
+        if param == "messages" or param.startswith("messages["):
+            return "malformed_tool_history"
+        if response.status_code in {400, 422}:
+            return "invalid_request_parameter" if param else "invalid_request"
+        return "upstream_error"
+
+    @staticmethod
+    def _agent_error_diagnostics(
+        response: httpx.Response,
+        metadata: dict[str, str | None],
+        category: str,
+    ) -> AgentTurnDiagnostics:
+        return AgentTurnDiagnostics(
+            response_type="provider_error",
+            tool_call_count=0,
+            parsing_status="not_parsed",
+            error_category=category,
+            http_status=response.status_code,
+            api_error_code=metadata["code"],
+            api_error_type=metadata["type"],
+            api_error_param=metadata["param"],
+            request_id=metadata["request_id"],
         )
 
     async def _complete(
@@ -345,6 +730,8 @@ class OpenAICompatibleProvider:
     def _rejects_json_mode(response: httpx.Response) -> bool:
         if response.status_code not in {400, 422}:
             return False
+        if OpenAICompatibleProvider._safe_error_metadata(response)["param"] == "response_format":
+            return True
         try:
             error_text = json.dumps(response.json()).casefold()
         except (ValueError, TypeError):
@@ -354,7 +741,15 @@ class OpenAICompatibleProvider:
         )
         rejects_setting = any(
             marker in error_text
-            for marker in ("unsupported", "not support", "unknown parameter", "unrecognized")
+            for marker in (
+                "unsupported",
+                "not support",
+                "unknown parameter",
+                "unrecognized",
+                "invalid parameter",
+                "invalid value",
+                "not allowed",
+            )
         )
         return mentions_setting and rejects_setting
 

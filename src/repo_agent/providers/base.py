@@ -19,6 +19,25 @@ class ProviderDiagnostics(BaseModel):
     semantic_grounding_evaluated: bool = False
 
 
+class AgentTurnDiagnostics(BaseModel):
+    response_type: str
+    finish_reason: str | None = None
+    tool_call_count: int = 0
+    parsing_status: str
+    error_category: str | None = None
+    estimated_context_tokens: int | None = None
+    unique_evidence_chunks: int = 0
+    duplicate_evidence_chunks: int = 0
+    remaining_context_tokens: int | None = None
+    termination_reason: str | None = None
+    context_token_history: list[int] = Field(default_factory=list)
+    http_status: int | None = None
+    api_error_code: str | None = None
+    api_error_type: str | None = None
+    api_error_param: str | None = None
+    request_id: str | None = None
+
+
 class ProviderCitation(BaseModel):
     """Path citation accepted only by the legacy, non-RAG analysis flow."""
 
@@ -44,6 +63,18 @@ class ProviderResult(BaseModel):
         return self.sufficient_context
 
 
+class ProviderToolCall(BaseModel):
+    id: str = Field(min_length=1, max_length=200)
+    name: str = Field(min_length=1, max_length=100)
+    arguments: dict[str, object]
+
+
+class ProviderAgentTurn(BaseModel):
+    tool_calls: list[ProviderToolCall] = Field(default_factory=list)
+    final_result: ProviderResult | None = None
+    diagnostics: AgentTurnDiagnostics | None = None
+
+
 class LLMProviderError(Exception):
     """Safe, user-facing error from a configured LLM provider."""
 
@@ -54,11 +85,13 @@ class LLMProviderError(Exception):
         status_code: int = 502,
         code: str = "llm_error",
         diagnostics: ProviderDiagnostics | None = None,
+        agent_diagnostics: AgentTurnDiagnostics | None = None,
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
         self.code = code
         self.diagnostics = diagnostics
+        self.agent_diagnostics = agent_diagnostics
 
 
 class LLMProvider(Protocol):
@@ -74,3 +107,13 @@ class LLMProvider(Protocol):
         citation_mode: Literal["paths", "chunk_ids"] = "paths",
     ) -> ProviderResult:
         """Answer a repository question using only the bounded context."""
+
+    async def agent_turn(
+        self,
+        messages: list[dict[str, object]],
+        tools: list[dict[str, object]],
+        *,
+        max_output_tokens: int,
+        tool_choice: Literal["auto", "none"] = "auto",
+    ) -> ProviderAgentTurn:
+        """Take one protocol-level tool-calling turn or return the final structured answer."""

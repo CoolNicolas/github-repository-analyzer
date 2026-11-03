@@ -1,8 +1,8 @@
-# GitHub AI Agent — Phase 3
+# GitHub AI Agent — Phase 4
 
 A read-only public GitHub repository inspector built with FastAPI, Streamlit, and httpx. It retrieves repository metadata and a bounded selection of text files through GitHub's REST API. Downloaded content is displayed only; the application never executes repository code.
 
-The application supports repository analysis and natural-language Q&A. Q&A indexes bounded source snapshots in a local SQLite FTS5 database, retrieves line-addressable chunks, and passes only those chunks to the configured provider. The deterministic mock provider remains the default, and live LLM inference is disabled unless explicitly enabled in the backend environment. No API key is needed for the mock provider.
+The application supports repository analysis and natural-language Q&A. Q&A indexes bounded source snapshots in a local SQLite FTS5 database, retrieves line-addressable chunks, and passes only those chunks to the configured provider. An optional read-only agent can call a small allowlist of repository search and source tools using the provider's actual tool-calling protocol. The deterministic mock provider remains the default, and agent mode is separately disabled unless explicitly enabled in the backend environment. No API key is needed for the mock provider.
 
 ## Requirements
 
@@ -60,6 +60,7 @@ Open the local URL Streamlit prints, usually `http://localhost:8501`. To use a d
 - `POST /api/repos/inspect` — inspect a public repository.
 - `POST /api/repos/analyze` — analyze the selected repository context.
 - `POST /api/repos/ask` — answer a repository question from the selected context.
+- `POST /api/repos/agent` — run a bounded, read-only tool-calling agent (requires `AGENT_ENABLED=true`).
 
 Example request body:
 
@@ -83,6 +84,14 @@ The analysis endpoint accepts the same `repository_url` request field. The quest
 Analysis and answer responses include `context_sufficient`, estimated context tokens, and citations. The analysis endpoint retains question-aware selection across its inspected snapshot. Q&A first retrieves relevant chunks from the local index, prioritizes explicitly named paths and exact code identifiers, and sends only those chunks to the provider. Citations must resolve to chunks included in that bounded prompt; the API generates commit- and line-pinned GitHub links and ignores provider-supplied URLs. When a requested file is missing or context is insufficient, the answer says so explicitly and does not invent a citation.
 
 The context budget defaults to 12,000 estimated tokens using a conservative four-characters-per-token approximation. The output budget defaults to 1,000 tokens. The inspection UI retains the Phase 1 20-file display limit; Q&A independently indexes up to 40 files by default, with 128 KiB per file, 5 MiB total source, 50 GitHub requests per indexing attempt, and 1,000 chunks. Chunk size defaults to 80 lines with 15 lines of overlap, and up to 10 chunks are retrieved per question. Change these limits with the `RAG_*` settings in `.env.example`. SQLite files are local under `data/` and ignored by Git. Existing commit indexes are reused until the default-branch SHA changes.
+
+## Read-only agent mode
+
+Agent mode uses the current commit-pinned SQLite FTS5 index and GitHub inspection service. Its only tools are `search_repository`, `read_file`, `find_symbol`, and `retrieve_chunks`; tool arguments are validated, paths must belong to the indexed repository commit, and repository code is never executed. Final citations must identify source chunks returned by tools, and the server generates commit-pinned links. The Streamlit trace shows tool names, sanitized arguments, statuses, and source references; it does not show private prompts or hidden reasoning.
+
+Agent mode is off by default. Set `AGENT_ENABLED=true` to opt in. For the live OpenAI-compatible provider, also set `LLM_ENABLED=true`, `LLM_PROVIDER=openai_compatible`, and the backend-only `LLM_API_KEY`. The selected model endpoint must support Chat Completions tool calls; otherwise the agent returns a clear unsupported-protocol error. The normal inspector, analysis, and RAG endpoints continue to work when agent mode is disabled.
+
+The conservative agent defaults are five model turns, eight tool calls, 8,000 estimated conversation tokens, five chunks per tool response, and 12,000 characters per tool result. Adjust these with `AGENT_MAX_STEPS`, `AGENT_MAX_TOOL_CALLS`, `AGENT_MAX_CONTEXT_TOKENS`, `AGENT_TOOL_MAX_CHUNKS`, and `AGENT_TOOL_MAX_RESPONSE_CHARS` in `.env.example`.
 
 ## Enabling live inference later
 
@@ -124,5 +133,6 @@ Limits can be changed with the `GITHUB_REQUEST_TIMEOUT_SECONDS`, `GITHUB_MAX_FIL
 - `src/repo_agent/analysis/` builds bounded context and validates source citations.
 - `src/repo_agent/providers/` contains the provider contract, default mock, and optional OpenAI-compatible HTTP provider.
 - `src/repo_agent/rag/` chunks files, maintains a local SQLite FTS5 index, retrieves relevant source, and verifies citations.
+- `src/repo_agent/agent/` runs bounded tool-call turns and validates final evidence IDs against tool-returned chunks.
 - `tests/unit/` tests URL parsing, retrieval limits, API behavior, bounded context, providers, and Q&A using mock providers and HTTP transports.
 

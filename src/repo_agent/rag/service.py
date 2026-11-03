@@ -48,38 +48,7 @@ class RepositoryRAGService:
 
     async def answer(self, repository_url: str, question: str) -> RepositoryAnalysisResponse:
         references = extract_file_references(question)
-        reference = parse_repository_url(repository_url)
-        revision = await self.repository_service.current_revision(repository_url)
-        is_indexed = self.index.has_index(revision.owner, revision.name, revision.commit_sha)
-        indexed_paths = self.index.paths(revision.owner, revision.name, revision.commit_sha)
-        missing_references = [
-            name
-            for name in references
-            if not any(file_matches_reference(path, name) for path in indexed_paths)
-        ]
-
-        if not is_indexed or missing_references:
-            snapshot = await self._fetch_index_snapshot(repository_url, references)
-            snapshot_revision = self._revision_from_inspection(
-                reference.owner, reference.name, snapshot
-            )
-            snapshot_paths = {source_file.path for source_file in snapshot.files}
-            requested_files_found = all(
-                any(file_matches_reference(path, name) for path in snapshot_paths)
-                for name in references
-            )
-            if (
-                not is_indexed
-                or snapshot_revision.commit_sha != revision.commit_sha
-                or requested_files_found
-            ):
-                self._replace_index(snapshot_revision, snapshot)
-                revision = snapshot_revision
-            else:
-                revision = snapshot_revision
-                indexed_paths = self.index.paths(revision.owner, revision.name, revision.commit_sha)
-
-        indexed_paths = self.index.paths(revision.owner, revision.name, revision.commit_sha)
+        revision, indexed_paths = await self.ensure_index(repository_url, references)
         unavailable_references = [
             name
             for name in references
@@ -136,6 +105,44 @@ class RepositoryRAGService:
             max_output_tokens=self.settings.llm_max_output_tokens,
         )
         return self._response(revision, context, result, question=question)
+
+    async def ensure_index(
+        self, repository_url: str, references: tuple[str, ...] = ()
+    ) -> tuple[RepositoryRevision, tuple[str, ...]]:
+        """Ensure the current commit has a bounded local index, reusing the RAG cache path."""
+        reference = parse_repository_url(repository_url)
+        revision = await self.repository_service.current_revision(repository_url)
+        is_indexed = self.index.has_index(revision.owner, revision.name, revision.commit_sha)
+        indexed_paths = self.index.paths(revision.owner, revision.name, revision.commit_sha)
+        missing_references = [
+            name
+            for name in references
+            if not any(file_matches_reference(path, name) for path in indexed_paths)
+        ]
+
+        if not is_indexed or missing_references:
+            snapshot = await self._fetch_index_snapshot(repository_url, references)
+            snapshot_revision = self._revision_from_inspection(
+                reference.owner, reference.name, snapshot
+            )
+            snapshot_paths = {source_file.path for source_file in snapshot.files}
+            requested_files_found = all(
+                any(file_matches_reference(path, name) for path in snapshot_paths)
+                for name in references
+            )
+            if (
+                not is_indexed
+                or snapshot_revision.commit_sha != revision.commit_sha
+                or requested_files_found
+            ):
+                self._replace_index(snapshot_revision, snapshot)
+                revision = snapshot_revision
+            else:
+                revision = snapshot_revision
+                indexed_paths = self.index.paths(revision.owner, revision.name, revision.commit_sha)
+
+        indexed_paths = self.index.paths(revision.owner, revision.name, revision.commit_sha)
+        return revision, indexed_paths
 
     async def _fetch_index_snapshot(
         self, repository_url: str, priority_paths: tuple[str, ...]

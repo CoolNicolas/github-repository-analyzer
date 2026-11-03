@@ -31,4 +31,10 @@ class Settings(BaseSettings):
     rag_chunk_overlap_lines: int = Field(default=15, ge=0, le=100)
     rag_retrieved_chunks: int = Field(default=10, gt=0, le=100)
     rag_diagnostics_enabled: bool = False
+    agent_enabled: bool = False
+    agent_max_steps: int = Field(default=5, ge=1, le=10)
+    agent_max_tool_calls: int = Field(default=8, ge=1, le=32)
+    agent_max_context_tokens: int = Field(default=8_000, ge=256, le=32_000)
+    agent_tool_max_response_chars: int = Field(default=12_000, ge=512, le=50_000)
+    agent_tool_max_chunks: int = Field(default=5, ge=1, le=20)
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
