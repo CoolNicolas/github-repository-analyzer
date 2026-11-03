@@ -4,6 +4,41 @@ GitHub Repository Analyzer turns a public repository into a bounded, searchable 
 
 The project explores a practical engineering question: how can an AI assistant answer code questions while keeping repository access read-only, grounding claims in retrieved files, and making its evidence inspectable?
 
+
+## Application Demo
+
+### 1. Repository Inspection
+
+Inspect public GitHub repositories, explore metadata, and browse source files.
+
+![Repository Overview](docs/screenshots/01-repository-overview.png)
+
+### 2. RAG-Powered Code Analysis
+
+Ask natural-language questions about a repository and receive source-grounded answers with commit-pinned citations.
+
+![RAG Analysis](docs/screenshots/04-rag-answer-and-citations.png)
+
+### 3. Agentic Repository Investigation
+
+The AI agent autonomously selects read-only tools to search source code, inspect functions, and produce evidence-based answers.
+
+![Agentic AI](docs/screenshots/05-agentic-answer.png)
+
+<details>
+<summary>Additional screenshots</summary>
+
+### Source File Browser
+
+![Source Files](docs/screenshots/02-source-files.png)
+
+### Analysis and Agent Interfaces
+
+![Query Modes](docs/screenshots/03-query-modes.png)
+
+</details>
+
+
 ## Highlights
 
 ### Repository inspection and analysis
