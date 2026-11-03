@@ -91,9 +91,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 if (-not (Test-Path .env)) {
-  if (-not (Test-Path .env)) {
-      Copy-Item .env.example .env
-  }
+  Copy-Item .env.example .env
 }
 ```
 
