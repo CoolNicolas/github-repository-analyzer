@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "name": "github-ai-agent-phase5a-2026-11",
+  "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+  "cases": [
+    {
+      "id": "agent-architecture",
+      "question": "Describe the agent orchestration component's role in this repository's architecture.",
+      "expected_sufficient": true,
+      "expected_sources": [
+        {"path": "src/repo_agent/agent/service.py", "symbol": "AgentOrchestrationService", "start_line": 206, "end_line": 282}
+      ],
+      "review_rubric": ["Correctly describes the agent's orchestration role and bounded tools.", "Does not claim behavior absent from cited source."]
+    },
+    {
+      "id": "rag-commit-cache",
+      "question": "How does RAG reuse an existing index for the same commit and refresh it when needed?",
+      "expected_sufficient": true,
+      "expected_sources": [
+        {"path": "src/repo_agent/rag/service.py", "symbol": "ensure_index", "start_line": 109, "end_line": 165},
+        {"path": "src/repo_agent/rag/index.py", "symbol": "replace_index", "start_line": 153, "end_line": 205}
+      ],
+      "review_rubric": ["Explains commit-keyed index reuse and replacement.", "Distinguishes local SQLite caching from GitHub retrieval."]
+    },
+    {
+      "id": "configuration-bounds",
+      "question": "Which settings bound context and retrieval size?",
+      "expected_sufficient": true,
+      "expected_sources": [
+        {"path": "src/repo_agent/settings.py", "symbol": "Settings", "start_line": 9, "end_line": 40}
+      ],
+      "review_rubric": ["Names settings and values/defaults accurately from the configured snapshot.", "Does not confuse separate GitHub, RAG, LLM, and agent limits."]
+    },
+    {
+      "id": "github-rate-limit-errors",
+      "question": "How does the GitHub client classify authentication and rate-limit failures?",
+      "expected_sufficient": true,
+      "expected_sources": [
+        {"path": "src/repo_agent/github/service.py", "symbol": "_get_json", "start_line": 310, "end_line": 372}
+      ],
+      "review_rubric": ["Distinguishes authentication failure from rate limiting.", "Describes safe error handling without implying write operations."]
+    },
+    {
+      "id": "agent-rag-relationship",
+      "question": "How does the agent use the existing RAG service and validate evidence?",
+      "expected_sufficient": true,
+      "expected_sources": [
+        {"path": "src/repo_agent/agent/service.py", "symbol": "AgentOrchestrationService", "start_line": 206, "end_line": 282},
+        {"path": "src/repo_agent/rag/service.py", "symbol": "RepositoryRAGService", "start_line": 34, "end_line": 77}
+      ],
+      "review_rubric": ["Accurately describes how agent orchestration reuses RAG/indexed evidence.", "Explains citation validation at an appropriate level."]
+    },
+    {
+      "id": "negative-missing-evidence",
+      "question": "Where is the fictional function zz_eval_missing_symbol_79c31 implemented?",
+      "expected_sufficient": false,
+      "expected_sources": [],
+      "review_rubric": ["Clearly says the inspected evidence does not establish the function.", "Does not invent a file, implementation, or citation."]
+    }
+  ]
+}

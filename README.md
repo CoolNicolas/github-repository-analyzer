@@ -1,138 +1,216 @@
-# GitHub AI Agent — Phase 4
+# GitHub Repository Analyzer — RAG & Agentic AI
 
-A read-only public GitHub repository inspector built with FastAPI, Streamlit, and httpx. It retrieves repository metadata and a bounded selection of text files through GitHub's REST API. Downloaded content is displayed only; the application never executes repository code.
+GitHub Repository Analyzer turns a public repository into a bounded, searchable source snapshot. It combines a FastAPI backend, a Streamlit interface, SQLite FTS5 retrieval, and an optional OpenAI-compatible model provider to explain repository code with commit-pinned citations.
 
-The application supports repository analysis and natural-language Q&A. Q&A indexes bounded source snapshots in a local SQLite FTS5 database, retrieves line-addressable chunks, and passes only those chunks to the configured provider. An optional read-only agent can call a small allowlist of repository search and source tools using the provider's actual tool-calling protocol. The deterministic mock provider remains the default, and agent mode is separately disabled unless explicitly enabled in the backend environment. No API key is needed for the mock provider.
+The project explores a practical engineering question: how can an AI assistant answer code questions while keeping repository access read-only, grounding claims in retrieved files, and making its evidence inspectable?
 
-## Requirements
+## Highlights
 
-- Python 3.11 or newer
-- Windows PowerShell is supported
-- Internet access to `api.github.com` for live repository inspection
+### Repository inspection and analysis
 
-## Setup (PowerShell)
+- Reads public GitHub repository metadata, the default-branch commit, and a bounded set of text files through GitHub REST API `GET` requests.
+- Displays source files with their blob SHA and inspected commit.
+- Summarizes selected repository context with the deterministic mock provider by default, or an explicitly configured OpenAI-compatible provider.
 
-From the project folder:
+### RAG question answering
+
+- Indexes bounded source snapshots locally in SQLite FTS5 and reuses indexes keyed by repository commit.
+- Splits source into overlapping, line-addressable chunks with stable IDs derived from the commit, blob, path, and line range.
+- Sends retrieved evidence to the provider and accepts citations only when their chunk IDs were included in that prompt.
+- Builds source links on the server, pinned to the inspected commit and exact chunk lines.
+- Shows indexed files, retrieved chunks, prompt-included chunks, and citations in the UI.
+
+### Read-only agentic tool calling
+
+- Uses native Chat Completions tool calls in a separate, bounded orchestration service.
+- Allows four Pydantic-validated tools: `search_repository`, `read_file`, `find_symbol`, and `retrieve_chunks`.
+- Reuses GitHub inspection and the SQLite FTS5 index; it does not execute repository code or shell commands.
+- Verifies final evidence IDs against chunks returned during that agent run, then generates pinned citations server-side.
+- Limits tool steps, calls, context, and tool response size. Agent mode is disabled unless explicitly enabled.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    UI[Streamlit UI] -->|HTTP requests| API[FastAPI]
+    API --> INSPECT[Repository inspector]
+    INSPECT -->|read-only REST GET| GH[GitHub REST API]
+    API --> RAG[RAG service]
+    RAG -->|commit-keyed chunks| FTS[(SQLite FTS5)]
+    RAG -->|question + prompt evidence| PROVIDER[LLM provider abstraction]
+    API --> AGENT[Agent orchestration]
+    AGENT -->|native tool-call turns| PROVIDER
+    AGENT -->|search / file / symbol / chunks| RAG
+    PROVIDER -->|mock or configured endpoint| MODEL[Mock or OpenAI-compatible model]
+    RAG -->|verified citations| API
+    AGENT -->|verified citations + safe trace| API
+```
+
+See [the architecture guide](docs/architecture.md) for the request flows, evidence model, bounds, and security trade-offs. For a short walkthrough, see the [demonstration guide](docs/demo.md).
+
+## Technology
+
+| Technology | Role |
+|---|---|
+| Python 3.11+ | Application services, schemas, and evaluation tooling |
+| FastAPI | HTTP API for inspection, analysis, repository Q&A, and agent runs |
+| Streamlit | Local browser interface for repository snapshots, answers, retrieval traces, and agent traces |
+| GitHub REST API + httpx | Bounded read-only retrieval of repository metadata and source files |
+| SQLite FTS5 | Local lexical search over source chunks; no embedding service required |
+| Pydantic / Pydantic Settings | Request and tool-argument validation, response schemas, and environment settings |
+| OpenAI-compatible Chat Completions | Optional structured responses and protocol-level tool calling |
+| pytest + Ruff | Offline regression tests, linting, and formatting checks |
+
+## How RAG answers a question
+
+1. The API resolves the repository’s current default-branch commit and checks the local commit-keyed index.
+2. If that commit is not indexed, the inspector fetches bounded source files and indexes overlapping chunks in SQLite FTS5.
+3. FTS5 ranks candidate chunks using question terms, code identifiers, and optional file references.
+4. The RAG service assembles a bounded prompt and records which retrieved chunks actually fit in it.
+5. The provider returns the canonical structured answer with `answer`, `sufficient_context`, and `citation_chunk_ids`.
+6. The server resolves those IDs only against prompt-included chunks. It derives paths, exact line ranges, blob/commit metadata, and GitHub URLs itself.
+
+If the evidence is missing, the response reports insufficient context. Identifier validation and citation integrity improve auditability, but they do not prove that every natural-language claim is semantically correct.
+
+## How the agent works
+
+The agent sends conversation history and the allowlisted tool schemas to the provider using native tool-calling protocol messages. It validates each requested tool name and arguments, executes only bounded read operations against the inspected repository and existing FTS index, and appends matching tool-call IDs and results to the conversation. It can then request another tool or return a structured final answer. At the configured step limit it has one bounded final-answer-only opportunity when evidence and context allow. The server rejects citations that do not resolve to evidence returned by the tools during that run.
+
+Repository files and tool output are treated as untrusted data, not instructions. The agent never executes repository code, shell commands, or model-generated URLs. Detailed limits and failure behavior are covered in the [architecture guide](docs/architecture.md).
+
+## Local setup (Windows PowerShell)
+
+Requirements: Python 3.11 or newer and Git. GitHub access is needed when you run inspection against a public repository. The default mock LLM provider requires no OpenAI key.
+
+From the project directory:
 
 ```powershell
-& "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe" -m venv .venv
+py -3.11 -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
-Copy-Item .env.example .env
-```
-
-The first command matches the Python 3.13 installation on this workstation. If Python is installed elsewhere, use its executable path, or use `py -3.11 -m venv .venv` when the Python launcher is available. The execution-policy command applies only to the current PowerShell process.
-
-## Run tests and lint
-
-```powershell
-python -m pytest
-python -m ruff check .
-python -m ruff format --check .
-```
-
-## Start FastAPI
-
-In one activated PowerShell terminal:
-
-```powershell
-python -m uvicorn repo_agent.api.main:app --app-dir src --reload
-```
-
-The API is at `http://127.0.0.1:8000`. Interactive API documentation is at `http://127.0.0.1:8000/docs`; health check: `http://127.0.0.1:8000/health`.
-
-## Start Streamlit
-
-In a second activated PowerShell terminal, from the project folder:
-
-```powershell
-python -m streamlit run src/repo_agent/ui/streamlit_app.py
-```
-
-Open the local URL Streamlit prints, usually `http://localhost:8501`. To use a different API URL, set `$env:REPO_AGENT_API_URL` before starting Streamlit.
-
-## API
-
-- `GET /health` — process health check.
-- `GET /api/status` — reports the active provider type and whether live inference is enabled; it never returns credentials or model configuration.
-- `POST /api/repos/inspect` — inspect a public repository.
-- `POST /api/repos/analyze` — analyze the selected repository context.
-- `POST /api/repos/ask` — answer a repository question from the selected context.
-- `POST /api/repos/agent` — run a bounded, read-only tool-calling agent (requires `AGENT_ENABLED=true`).
-
-Example request body:
-
-```json
-{
-  "repository_url": "https://github.com/owner/repository"
+if (-not (Test-Path .env)) {
+  if (-not (Test-Path .env)) {
+      Copy-Item .env.example .env
+  }
 }
 ```
 
-Each returned file includes its path, Git blob SHA, the inspected default-branch commit SHA, and a GitHub citation URL pinned to that commit.
+If `py` is unavailable, create the environment with `python -m venv .venv` using an installed Python 3.11+ interpreter. The execution-policy setting applies only to the current PowerShell process. The guarded copy command creates `.env` only when it does not already exist, preserving existing local settings and credentials. Edit `.env` locally when you need non-default settings; `.env.example` is the safe template and contains no real credentials. `.env` is ignored by Git.
 
-The analysis endpoint accepts the same `repository_url` request field. The question endpoint accepts `repository_url` and `question`, for example:
+### Optional credentials and provider settings
 
-```json
-{
-  "repository_url": "https://github.com/owner/repository",
-  "question": "Where is the application entry point?"
-}
-```
+The default configuration uses the mock provider and does not require an LLM API key. GitHub authentication is optional for public repositories. To use a personal access token, set `GITHUB_TOKEN` in the backend `.env`; requests use it only in the backend’s GitHub API authorization header. Keep the token out of source files, screenshots, issue reports, and browser code.
 
-Analysis and answer responses include `context_sufficient`, estimated context tokens, and citations. The analysis endpoint retains question-aware selection across its inspected snapshot. Q&A first retrieves relevant chunks from the local index, prioritizes explicitly named paths and exact code identifiers, and sends only those chunks to the provider. Citations must resolve to chunks included in that bounded prompt; the API generates commit- and line-pinned GitHub links and ignores provider-supplied URLs. When a requested file is missing or context is insufficient, the answer says so explicitly and does not invent a citation.
-
-The context budget defaults to 12,000 estimated tokens using a conservative four-characters-per-token approximation. The output budget defaults to 1,000 tokens. The inspection UI retains the Phase 1 20-file display limit; Q&A independently indexes up to 40 files by default, with 128 KiB per file, 5 MiB total source, 50 GitHub requests per indexing attempt, and 1,000 chunks. Chunk size defaults to 80 lines with 15 lines of overlap, and up to 10 chunks are retrieved per question. Change these limits with the `RAG_*` settings in `.env.example`. SQLite files are local under `data/` and ignored by Git. Existing commit indexes are reused until the default-branch SHA changes.
-
-## Read-only agent mode
-
-Agent mode uses the current commit-pinned SQLite FTS5 index and GitHub inspection service. Its only tools are `search_repository`, `read_file`, `find_symbol`, and `retrieve_chunks`; tool arguments are validated, paths must belong to the indexed repository commit, and repository code is never executed. Final citations must identify source chunks returned by tools, and the server generates commit-pinned links. The Streamlit trace shows tool names, sanitized arguments, statuses, and source references; it does not show private prompts or hidden reasoning.
-
-Agent mode is off by default. Set `AGENT_ENABLED=true` to opt in. For the live OpenAI-compatible provider, also set `LLM_ENABLED=true`, `LLM_PROVIDER=openai_compatible`, and the backend-only `LLM_API_KEY`. The selected model endpoint must support Chat Completions tool calls; otherwise the agent returns a clear unsupported-protocol error. The normal inspector, analysis, and RAG endpoints continue to work when agent mode is disabled.
-
-The conservative agent defaults are five model turns, eight tool calls, 8,000 estimated conversation tokens, five chunks per tool response, and 12,000 characters per tool result. Adjust these with `AGENT_MAX_STEPS`, `AGENT_MAX_TOOL_CALLS`, `AGENT_MAX_CONTEXT_TOKENS`, `AGENT_TOOL_MAX_CHUNKS`, and `AGENT_TOOL_MAX_RESPONSE_CHARS` in `.env.example`.
-
-## Enabling live inference later
-
-Live requests are disabled by default. The mock remains active unless both `LLM_ENABLED=true` and `LLM_PROVIDER=openai_compatible` are set in the backend environment. Before enabling a hosted provider, get explicit approval for live API usage. Then place the provider key in `.env` or a backend environment variable; never put it in Streamlit code or browser configuration.
-
-Restart FastAPI after changing these settings. Enabling a hosted provider can incur charges according to that provider's model and token pricing.
-
-Example backend `.env` settings:
+For a hosted OpenAI-compatible provider, configure these backend-only settings in `.env`:
 
 ```dotenv
 LLM_ENABLED=true
 LLM_PROVIDER=openai_compatible
 LLM_BASE_URL=https://api.openai.com/v1
 LLM_MODEL=your-approved-model
-LLM_API_KEY=your-secret-key
-LLM_REQUEST_TIMEOUT_SECONDS=30
-LLM_MAX_CONTEXT_TOKENS=12000
-LLM_MAX_OUTPUT_TOKENS=1000
+LLM_API_KEY=
 ```
 
-The same provider works with OpenAI-compatible services by changing `LLM_BASE_URL`, `LLM_MODEL`, and, when required, `LLM_API_KEY`. Remote endpoints must use HTTPS; local HTTP endpoints are allowed only on localhost. The API key is held as a secret setting and is sent only in the backend authorization header. The app does not log request headers or provider response bodies. The provider uses the OpenAI-compatible `/chat/completions` route and expects JSON in the message content containing `answer`, `context_sufficient`, and `citation_paths`. A `citations` field containing exact file paths or objects with a `path` is also normalized. The API ignores any URL returned by a model and resolves citations only against source paths sent in the prompt.
+Replace the model placeholder and set the key locally in `.env`; do not copy real values into this README or `.env.example`. Remote provider URLs must use HTTPS. A hosted provider may charge for requests. Agent mode additionally requires `AGENT_ENABLED=true` and a model endpoint that supports the expected Chat Completions tool-calling protocol. Keep all credentials on the FastAPI backend.
 
-## Read-only and size safeguards
+## Run the application
 
-- Only HTTPS repository URLs hosted on `github.com` or `www.github.com` are accepted.
-- GitHub requests use only read endpoints; no clone, push, issue, or other write operations are performed.
-- The default limits are 20 files, 64 KiB per file, 512 KiB total source, and a 15-second timeout per GitHub request.
-- Binary and non-UTF-8 files are skipped, and file extensions are filtered to likely text formats.
-- Repository contents are never executed.
-- GitHub public unauthenticated API access is used. GitHub's current published REST API limit is 60 requests per hour for unauthenticated requests.
+Start FastAPI in the first activated PowerShell terminal, from the project root:
 
-Limits can be changed with the `GITHUB_REQUEST_TIMEOUT_SECONDS`, `GITHUB_MAX_FILES`, `GITHUB_MAX_FILE_BYTES`, and `GITHUB_MAX_TOTAL_BYTES` environment variables. `.env.example` lists the defaults.
+```powershell
+python -m uvicorn repo_agent.api.main:app --app-dir src --reload
+```
 
-## Project map
+The API listens at `http://127.0.0.1:8000`; interactive docs are at `http://127.0.0.1:8000/docs` and the health endpoint is `/health`.
 
-- `src/repo_agent/github/` validates repository URLs and performs bounded GitHub API reads.
-- `src/repo_agent/api/` exposes FastAPI routes and user-safe error responses.
-- `src/repo_agent/ui/` contains the Streamlit interface.
-- `src/repo_agent/analysis/` builds bounded context and validates source citations.
-- `src/repo_agent/providers/` contains the provider contract, default mock, and optional OpenAI-compatible HTTP provider.
-- `src/repo_agent/rag/` chunks files, maintains a local SQLite FTS5 index, retrieves relevant source, and verifies citations.
-- `src/repo_agent/agent/` runs bounded tool-call turns and validates final evidence IDs against tool-returned chunks.
-- `tests/unit/` tests URL parsing, retrieval limits, API behavior, bounded context, providers, and Q&A using mock providers and HTTP transports.
+Start Streamlit in a second terminal, also from the project root:
 
+```powershell
+python -m streamlit run src/repo_agent/ui/streamlit_app.py
+```
+
+The Streamlit URL is printed in the terminal, usually `http://localhost:8501`. To point the UI to another API instance, set `$env:REPO_AGENT_API_URL` before starting Streamlit.
+
+## Example questions
+
+Enter a public GitHub repository URL in the UI, inspect it, then try questions such as:
+
+- “Where is the application entry point?” — expect file references for likely startup code, when present in the bounded source snapshot.
+- “How does the project load configuration?” — expect an explanation grounded in retrieved configuration and call-site chunks.
+- “What happens when GitHub returns a rate-limit response?” — expect relevant error-handling evidence and exact pinned line citations.
+- “Trace how this function is called and what it returns.” — try with a named symbol and optionally its file path.
+
+These are example prompts, not claims of measured answer quality. Results depend on which files were selected, retrieved, and included in the model context.
+
+## Tests and evaluation
+
+Run tests from `tests\unit` so settings-based tests do not discover a project-root `.env` file:
+
+```powershell
+Push-Location tests\unit
+python -m pytest -q -c ..\..\pyproject.toml .
+Pop-Location
+```
+
+Run lint and formatting checks from the project root:
+
+```powershell
+python -m ruff check .
+python -m ruff format --check .
+```
+
+The offline benchmark is deterministic and makes no GitHub or OpenAI requests:
+
+```powershell
+python -m repo_agent.evaluation.cli
+```
+
+It writes JSON, CSV, and Markdown reports under `evaluation/reports/`, using source references pinned to commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`. See [evaluation/benchmark.json](evaluation/benchmark.json) and the [audited report](evaluation/reports/offline_mock-a2da9850fdd1.md). A live evaluation requires both `--live` and `--approve-paid-api`; consult the [evaluation instructions](docs/architecture.md#evaluation-architecture) and ensure the benchmark commit matches the repository being tested.
+
+### Latest audited evaluation
+
+| Measure | Offline result |
+|---|---:|
+| Automated tests | 128 passed |
+| Mock evaluation completion | 13/13 |
+| Expected sufficient/insufficient status | 13/13 matched |
+| Citation integrity | 13/13 |
+| Mechanical citation relevance — analysis | 1/1 |
+| Mechanical citation relevance — RAG | 3/5 applicable cases |
+| Mechanical citation relevance — agent | 3/5 applicable cases |
+| Human-reviewed real-model accuracy | Not measured |
+
+The missing-evidence case has no expected source citation, so it is excluded from relevance denominators; its empty citation set is valid. The evaluation found a configuration retrieval miss: `settings.py` was not retrieved for the configuration question. It also found an agent/RAG relationship case where RAG retrieved the expected symbols but the mock selected unrelated chunks, while agent retrieval returned unrelated ranges. The mock’s first-chunk citation selection is not a realistic semantic model. These findings are documented rather than presented as model failures or hidden from the report. Mock evaluation checks workflow and validation behavior; it does not establish real-model accuracy.
+
+## Security, limits, and trade-offs
+
+- GitHub operations are read-only. The inspector accepts GitHub repository URLs and performs bounded API reads; it does not clone, write, or execute repository content.
+- File count, file size, total source bytes, request counts, chunk count, context size, tool response size, agent steps, and tool calls have configurable limits. Defaults are listed in `.env.example`.
+- `GITHUB_TOKEN` is optional. `LLM_API_KEY` is a backend secret setting. Neither belongs in the Streamlit client or a public commit.
+- Source text is treated as untrusted input. Agent tool names and arguments are allowlisted/validated; repository paths are restricted to the inspected commit.
+- RAG uses lexical FTS5 rather than embeddings. Lexical retrieval can miss relevant identifiers or cross-file relationships, as the audited benchmark demonstrates.
+- Citation integrity confirms evidence identity, source path/range, and commit provenance. It does not prove the answer accurately interprets that evidence.
+- The default mock provider is useful for offline integration and tests, not answer-quality measurement. Human review and a commit-matched, explicitly approved live evaluation are needed for model-quality assessment.
+
+## Project structure
+
+```text
+src/repo_agent/
+  agent/       bounded, read-only tool orchestration
+  analysis/    bounded repository context and analysis
+  api/         FastAPI application and routes
+  evaluation/  offline-first benchmark and report generation
+  github/      URL validation and GitHub REST retrieval
+  providers/   provider contract, mock, and OpenAI-compatible client
+  rag/         chunking, SQLite FTS5 index, retrieval, and citations
+  ui/          Streamlit application
+docs/
+  architecture.md
+  demo.md
+evaluation/
+  benchmark.json
+  reports/
+tests/unit/    offline unit and integration tests
+```

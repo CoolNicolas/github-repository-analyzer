@@ -1,0 +1,1144 @@
+{
+  "schema_version": 1,
+  "benchmark": "github-ai-agent-phase5a-2026-11",
+  "mode": "offline_mock",
+  "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+  "configuration": {
+    "provider": "deterministic_mock",
+    "live_requests": false,
+    "context_budget_tokens": 8000,
+    "agent_max_steps": 5,
+    "agent_max_tool_calls": 8,
+    "agent_tool_max_chunks": 5,
+    "agent_tool_max_response_chars": 12000,
+    "llm_max_context_tokens": 8000,
+    "llm_max_output_tokens": 1000,
+    "rag_retrieved_chunks": 10,
+    "rag_chunk_lines": 80,
+    "rag_chunk_overlap_lines": 15,
+    "fixture_repository": "https://github.com/evaluation/github-ai-agent-fixture"
+  },
+  "records": [
+    {
+      "case_id": "agent-architecture",
+      "mode": "analysis",
+      "question": "Describe the agent orchestration component's role in this repository's architecture.",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [
+        {
+          "path": "src/repo_agent/agent/service.py",
+          "symbol": "AgentOrchestrationService",
+          "start_line": 206,
+          "end_line": 282
+        }
+      ],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": true,
+      "context_sufficient": true,
+      "sufficiency_match": true,
+      "answer": "Mock analysis based on the supplied repository context (1 source files).\n\nSources:\n- [`src/repo_agent/agent/service.py`](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)",
+      "error_category": null,
+      "termination_reason": null,
+      "model_calls": 1,
+      "tool_calls": 0,
+      "retrieved_chunk_ids": [],
+      "prompt_chunk_ids": [],
+      "citation_chunk_ids": [],
+      "citations": [
+        {
+          "chunk_id": null,
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": null,
+          "end_line": null,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        }
+      ],
+      "retrieved_files": [
+        "src/repo_agent/agent/service.py"
+      ],
+      "cited_files": [
+        "src/repo_agent/agent/service.py"
+      ],
+      "expected_files_retrieved": [
+        "src/repo_agent/agent/service.py"
+      ],
+      "expected_symbols_retrieved": [],
+      "citation_valid": true,
+      "citation_relevant": true,
+      "unique_chunks": 0,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 8000,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 1.0,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "agent-architecture",
+      "mode": "rag",
+      "question": "Describe the agent orchestration component's role in this repository's architecture.",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [
+        {
+          "path": "src/repo_agent/agent/service.py",
+          "symbol": "AgentOrchestrationService",
+          "start_line": 206,
+          "end_line": 282
+        }
+      ],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": true,
+      "context_sufficient": true,
+      "sufficiency_match": true,
+      "answer": "Mock answer to: Describe the agent orchestration component's role in this repository's architecture.\n\nSources:\n- [`src/repo_agent/github/service.py` lines 456-535](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L456-L535) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/agent/service.py` lines 196-275](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L196-L275) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/agent/service.py` lines 1-80](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L1-L80) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)",
+      "error_category": null,
+      "termination_reason": null,
+      "model_calls": 1,
+      "tool_calls": 0,
+      "retrieved_chunk_ids": [
+        "chunk_17e5258f2033277e3cb8",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_c9d22a3e05972c487af3",
+        "chunk_8879d1ced98c08128c2d",
+        "chunk_f6fc6ad0a4da4754d2cb",
+        "chunk_3b9bbe49e97287782df6",
+        "chunk_f482ce135ac8b4c887f9",
+        "chunk_d3aa21b692c2990db811",
+        "chunk_5ee55c840821bdb85f59"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_17e5258f2033277e3cb8",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_c9d22a3e05972c487af3",
+        "chunk_8879d1ced98c08128c2d",
+        "chunk_f6fc6ad0a4da4754d2cb",
+        "chunk_3b9bbe49e97287782df6"
+      ],
+      "citation_chunk_ids": [
+        "chunk_17e5258f2033277e3cb8",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_7588bfa2e0bb010e43b5"
+      ],
+      "citations": [
+        {
+          "chunk_id": "chunk_17e5258f2033277e3cb8",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 456,
+          "end_line": 535,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_dc5d6376b6df5aab565f",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 196,
+          "end_line": 275,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_7588bfa2e0bb010e43b5",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 1,
+          "end_line": 80,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        }
+      ],
+      "retrieved_files": [
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/rag/service.py"
+      ],
+      "cited_files": [
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/agent/service.py"
+      ],
+      "expected_files_retrieved": [
+        "src/repo_agent/agent/service.py"
+      ],
+      "expected_symbols_retrieved": [
+        "AgentOrchestrationService"
+      ],
+      "citation_valid": true,
+      "citation_relevant": true,
+      "unique_chunks": 10,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 7764,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.9705,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "agent-architecture",
+      "mode": "agent",
+      "question": "Describe the agent orchestration component's role in this repository's architecture.",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [
+        {
+          "path": "src/repo_agent/agent/service.py",
+          "symbol": "AgentOrchestrationService",
+          "start_line": 206,
+          "end_line": 282
+        }
+      ],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": true,
+      "context_sufficient": true,
+      "sufficiency_match": true,
+      "answer": "Offline mock answer grounded in returned repository evidence.\n\nSources:\n- [`src/repo_agent/github/service.py` lines 456-535](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L456-L535) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/agent/service.py` lines 196-275](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L196-L275) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/agent/service.py` lines 1-80](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L1-L80) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)",
+      "error_category": null,
+      "termination_reason": null,
+      "model_calls": 2,
+      "tool_calls": 1,
+      "retrieved_chunk_ids": [
+        "chunk_17e5258f2033277e3cb8",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_7588bfa2e0bb010e43b5"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_17e5258f2033277e3cb8",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_7588bfa2e0bb010e43b5"
+      ],
+      "citation_chunk_ids": [
+        "chunk_17e5258f2033277e3cb8",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_7588bfa2e0bb010e43b5"
+      ],
+      "citations": [
+        {
+          "chunk_id": "chunk_17e5258f2033277e3cb8",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 456,
+          "end_line": 535,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_dc5d6376b6df5aab565f",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 196,
+          "end_line": 275,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_7588bfa2e0bb010e43b5",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 1,
+          "end_line": 80,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        }
+      ],
+      "retrieved_files": [
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/agent/service.py"
+      ],
+      "cited_files": [
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/agent/service.py"
+      ],
+      "expected_files_retrieved": [
+        "src/repo_agent/agent/service.py"
+      ],
+      "expected_symbols_retrieved": [
+        "AgentOrchestrationService"
+      ],
+      "citation_valid": true,
+      "citation_relevant": true,
+      "unique_chunks": 3,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 3698,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.46225,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "rag-commit-cache",
+      "mode": "rag",
+      "question": "How does RAG reuse an existing index for the same commit and refresh it when needed?",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [
+        {
+          "path": "src/repo_agent/rag/service.py",
+          "symbol": "ensure_index",
+          "start_line": 109,
+          "end_line": 165
+        },
+        {
+          "path": "src/repo_agent/rag/index.py",
+          "symbol": "replace_index",
+          "start_line": 153,
+          "end_line": 205
+        }
+      ],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": true,
+      "context_sufficient": true,
+      "sufficiency_match": true,
+      "answer": "Mock answer to: How does RAG reuse an existing index for the same commit and refresh it when needed?\n\nSources:\n- [`src/repo_agent/agent/service.py` lines 1-80](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L1-L80) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/rag/service.py` lines 66-145](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/rag/service.py#L66-L145) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/rag/service.py` lines 1-80](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/rag/service.py#L1-L80) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)",
+      "error_category": null,
+      "termination_reason": null,
+      "model_calls": 1,
+      "tool_calls": 0,
+      "retrieved_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_1162ad288c5145ed2e45",
+        "chunk_203d08a8db28b4f53eb2",
+        "chunk_ce5ebafa84e46a223f9f",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_b8d82dc94f58110a2f31",
+        "chunk_5ee55c840821bdb85f59",
+        "chunk_506ffb5931169e4c06fd",
+        "chunk_b9fde0e5804dd73ee333",
+        "chunk_8879d1ced98c08128c2d"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_1162ad288c5145ed2e45",
+        "chunk_203d08a8db28b4f53eb2",
+        "chunk_ce5ebafa84e46a223f9f",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_b8d82dc94f58110a2f31",
+        "chunk_5ee55c840821bdb85f59",
+        "chunk_506ffb5931169e4c06fd"
+      ],
+      "citation_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_1162ad288c5145ed2e45",
+        "chunk_203d08a8db28b4f53eb2"
+      ],
+      "citations": [
+        {
+          "chunk_id": "chunk_7588bfa2e0bb010e43b5",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 1,
+          "end_line": 80,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_1162ad288c5145ed2e45",
+          "path": "src/repo_agent/rag/service.py",
+          "start_line": 66,
+          "end_line": 145,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_203d08a8db28b4f53eb2",
+          "path": "src/repo_agent/rag/service.py",
+          "start_line": 1,
+          "end_line": 80,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        }
+      ],
+      "retrieved_files": [
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/rag/service.py",
+        "src/repo_agent/rag/index.py"
+      ],
+      "cited_files": [
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/rag/service.py",
+        "src/repo_agent/rag/service.py"
+      ],
+      "expected_files_retrieved": [
+        "src/repo_agent/rag/index.py",
+        "src/repo_agent/rag/service.py"
+      ],
+      "expected_symbols_retrieved": [
+        "ensure_index"
+      ],
+      "citation_valid": true,
+      "citation_relevant": true,
+      "unique_chunks": 10,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 7875,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.984375,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "rag-commit-cache",
+      "mode": "agent",
+      "question": "How does RAG reuse an existing index for the same commit and refresh it when needed?",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [
+        {
+          "path": "src/repo_agent/rag/service.py",
+          "symbol": "ensure_index",
+          "start_line": 109,
+          "end_line": 165
+        },
+        {
+          "path": "src/repo_agent/rag/index.py",
+          "symbol": "replace_index",
+          "start_line": 153,
+          "end_line": 205
+        }
+      ],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": true,
+      "context_sufficient": true,
+      "sufficiency_match": true,
+      "answer": "Offline mock answer grounded in returned repository evidence.\n\nSources:\n- [`src/repo_agent/agent/service.py` lines 1-80](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L1-L80) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/rag/service.py` lines 66-145](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/rag/service.py#L66-L145) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/rag/service.py` lines 1-80](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/rag/service.py#L1-L80) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)",
+      "error_category": null,
+      "termination_reason": null,
+      "model_calls": 2,
+      "tool_calls": 1,
+      "retrieved_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_1162ad288c5145ed2e45",
+        "chunk_203d08a8db28b4f53eb2"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_1162ad288c5145ed2e45",
+        "chunk_203d08a8db28b4f53eb2"
+      ],
+      "citation_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_1162ad288c5145ed2e45",
+        "chunk_203d08a8db28b4f53eb2"
+      ],
+      "citations": [
+        {
+          "chunk_id": "chunk_7588bfa2e0bb010e43b5",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 1,
+          "end_line": 80,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_1162ad288c5145ed2e45",
+          "path": "src/repo_agent/rag/service.py",
+          "start_line": 66,
+          "end_line": 145,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_203d08a8db28b4f53eb2",
+          "path": "src/repo_agent/rag/service.py",
+          "start_line": 1,
+          "end_line": 80,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        }
+      ],
+      "retrieved_files": [
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/rag/service.py"
+      ],
+      "cited_files": [
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/rag/service.py",
+        "src/repo_agent/rag/service.py"
+      ],
+      "expected_files_retrieved": [
+        "src/repo_agent/rag/service.py"
+      ],
+      "expected_symbols_retrieved": [
+        "ensure_index"
+      ],
+      "citation_valid": true,
+      "citation_relevant": true,
+      "unique_chunks": 3,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 3403,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.425375,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "configuration-bounds",
+      "mode": "rag",
+      "question": "Which settings bound context and retrieval size?",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [
+        {
+          "path": "src/repo_agent/settings.py",
+          "symbol": "Settings",
+          "start_line": 9,
+          "end_line": 40
+        }
+      ],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": true,
+      "context_sufficient": true,
+      "sufficiency_match": true,
+      "answer": "Mock answer to: Which settings bound context and retrieval size?\n\nSources:\n- [`src/repo_agent/github/service.py` lines 196-275](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L196-L275) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/github/service.py` lines 261-340](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L261-L340) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/github/service.py` lines 391-470](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L391-L470) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)",
+      "error_category": null,
+      "termination_reason": null,
+      "model_calls": 1,
+      "tool_calls": 0,
+      "retrieved_chunk_ids": [
+        "chunk_982bb39964b291858e41",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_c4f2f613f12eb975c008",
+        "chunk_5ee55c840821bdb85f59",
+        "chunk_8a15a0f5ddf584f0c34c",
+        "chunk_c9d22a3e05972c487af3",
+        "chunk_4f959e4fd94c8602020c",
+        "chunk_4b2fd71e94f28ea551a6",
+        "chunk_ce5ebafa84e46a223f9f",
+        "chunk_203d08a8db28b4f53eb2"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_982bb39964b291858e41",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_c4f2f613f12eb975c008",
+        "chunk_5ee55c840821bdb85f59",
+        "chunk_8a15a0f5ddf584f0c34c",
+        "chunk_c9d22a3e05972c487af3",
+        "chunk_4f959e4fd94c8602020c"
+      ],
+      "citation_chunk_ids": [
+        "chunk_982bb39964b291858e41",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_c4f2f613f12eb975c008"
+      ],
+      "citations": [
+        {
+          "chunk_id": "chunk_982bb39964b291858e41",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 196,
+          "end_line": 275,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_54fb96f1f45cbefec1d1",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 261,
+          "end_line": 340,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_c4f2f613f12eb975c008",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 391,
+          "end_line": 470,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        }
+      ],
+      "retrieved_files": [
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/rag/index.py",
+        "src/repo_agent/rag/service.py"
+      ],
+      "cited_files": [
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/github/service.py"
+      ],
+      "expected_files_retrieved": [],
+      "expected_symbols_retrieved": [],
+      "citation_valid": true,
+      "citation_relevant": false,
+      "unique_chunks": 10,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 7924,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.9905,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "configuration-bounds",
+      "mode": "agent",
+      "question": "Which settings bound context and retrieval size?",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [
+        {
+          "path": "src/repo_agent/settings.py",
+          "symbol": "Settings",
+          "start_line": 9,
+          "end_line": 40
+        }
+      ],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": true,
+      "context_sufficient": true,
+      "sufficiency_match": true,
+      "answer": "Offline mock answer grounded in returned repository evidence.\n\nSources:\n- [`src/repo_agent/github/service.py` lines 196-275](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L196-L275) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/github/service.py` lines 261-340](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L261-L340) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/github/service.py` lines 391-470](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L391-L470) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)",
+      "error_category": null,
+      "termination_reason": null,
+      "model_calls": 2,
+      "tool_calls": 1,
+      "retrieved_chunk_ids": [
+        "chunk_982bb39964b291858e41",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_c4f2f613f12eb975c008"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_982bb39964b291858e41",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_c4f2f613f12eb975c008"
+      ],
+      "citation_chunk_ids": [
+        "chunk_982bb39964b291858e41",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_c4f2f613f12eb975c008"
+      ],
+      "citations": [
+        {
+          "chunk_id": "chunk_982bb39964b291858e41",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 196,
+          "end_line": 275,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_54fb96f1f45cbefec1d1",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 261,
+          "end_line": 340,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_c4f2f613f12eb975c008",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 391,
+          "end_line": 470,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        }
+      ],
+      "retrieved_files": [
+        "src/repo_agent/github/service.py"
+      ],
+      "cited_files": [
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/github/service.py"
+      ],
+      "expected_files_retrieved": [],
+      "expected_symbols_retrieved": [],
+      "citation_valid": true,
+      "citation_relevant": false,
+      "unique_chunks": 3,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 3925,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.490625,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "github-rate-limit-errors",
+      "mode": "rag",
+      "question": "How does the GitHub client classify authentication and rate-limit failures?",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [
+        {
+          "path": "src/repo_agent/github/service.py",
+          "symbol": "_get_json",
+          "start_line": 310,
+          "end_line": 372
+        }
+      ],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": true,
+      "context_sufficient": true,
+      "sufficiency_match": true,
+      "answer": "Mock answer to: How does the GitHub client classify authentication and rate-limit failures?\n\nSources:\n- [`src/repo_agent/github/service.py` lines 326-405](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L326-L405) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/github/service.py` lines 261-340](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L261-L340) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/github/service.py` lines 196-275](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L196-L275) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)",
+      "error_category": null,
+      "termination_reason": null,
+      "model_calls": 1,
+      "tool_calls": 0,
+      "retrieved_chunk_ids": [
+        "chunk_2f4acc46507aa3a5bdd0",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_982bb39964b291858e41",
+        "chunk_5eb48739fd86e34f0248",
+        "chunk_8f79ea26a1b592c5f0e1",
+        "chunk_203d08a8db28b4f53eb2",
+        "chunk_359b9fd5a526d97c6f02",
+        "chunk_1ccd8dea43721cce9d65",
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_978e0e0f49a619325d7b"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_2f4acc46507aa3a5bdd0",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_982bb39964b291858e41",
+        "chunk_5eb48739fd86e34f0248",
+        "chunk_8f79ea26a1b592c5f0e1",
+        "chunk_203d08a8db28b4f53eb2",
+        "chunk_359b9fd5a526d97c6f02"
+      ],
+      "citation_chunk_ids": [
+        "chunk_2f4acc46507aa3a5bdd0",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_982bb39964b291858e41"
+      ],
+      "citations": [
+        {
+          "chunk_id": "chunk_2f4acc46507aa3a5bdd0",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 326,
+          "end_line": 405,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_54fb96f1f45cbefec1d1",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 261,
+          "end_line": 340,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_982bb39964b291858e41",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 196,
+          "end_line": 275,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        }
+      ],
+      "retrieved_files": [
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/rag/service.py",
+        "src/repo_agent/settings.py"
+      ],
+      "cited_files": [
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/github/service.py"
+      ],
+      "expected_files_retrieved": [
+        "src/repo_agent/github/service.py"
+      ],
+      "expected_symbols_retrieved": [
+        "_get_json"
+      ],
+      "citation_valid": true,
+      "citation_relevant": true,
+      "unique_chunks": 10,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 7467,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.933375,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "github-rate-limit-errors",
+      "mode": "agent",
+      "question": "How does the GitHub client classify authentication and rate-limit failures?",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [
+        {
+          "path": "src/repo_agent/github/service.py",
+          "symbol": "_get_json",
+          "start_line": 310,
+          "end_line": 372
+        }
+      ],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": true,
+      "context_sufficient": true,
+      "sufficiency_match": true,
+      "answer": "Offline mock answer grounded in returned repository evidence.\n\nSources:\n- [`src/repo_agent/github/service.py` lines 326-405](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L326-L405) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/github/service.py` lines 261-340](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L261-L340) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/github/service.py` lines 196-275](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/github/service.py#L196-L275) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)",
+      "error_category": null,
+      "termination_reason": null,
+      "model_calls": 2,
+      "tool_calls": 1,
+      "retrieved_chunk_ids": [
+        "chunk_2f4acc46507aa3a5bdd0",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_982bb39964b291858e41"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_2f4acc46507aa3a5bdd0",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_982bb39964b291858e41"
+      ],
+      "citation_chunk_ids": [
+        "chunk_2f4acc46507aa3a5bdd0",
+        "chunk_54fb96f1f45cbefec1d1",
+        "chunk_982bb39964b291858e41"
+      ],
+      "citations": [
+        {
+          "chunk_id": "chunk_2f4acc46507aa3a5bdd0",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 326,
+          "end_line": 405,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_54fb96f1f45cbefec1d1",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 261,
+          "end_line": 340,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_982bb39964b291858e41",
+          "path": "src/repo_agent/github/service.py",
+          "start_line": 196,
+          "end_line": 275,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        }
+      ],
+      "retrieved_files": [
+        "src/repo_agent/github/service.py"
+      ],
+      "cited_files": [
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/github/service.py",
+        "src/repo_agent/github/service.py"
+      ],
+      "expected_files_retrieved": [
+        "src/repo_agent/github/service.py"
+      ],
+      "expected_symbols_retrieved": [
+        "_get_json"
+      ],
+      "citation_valid": true,
+      "citation_relevant": true,
+      "unique_chunks": 3,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 3900,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.4875,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "agent-rag-relationship",
+      "mode": "rag",
+      "question": "How does the agent use the existing RAG service and validate evidence?",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [
+        {
+          "path": "src/repo_agent/agent/service.py",
+          "symbol": "AgentOrchestrationService",
+          "start_line": 206,
+          "end_line": 282
+        },
+        {
+          "path": "src/repo_agent/rag/service.py",
+          "symbol": "RepositoryRAGService",
+          "start_line": 34,
+          "end_line": 77
+        }
+      ],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": true,
+      "context_sufficient": true,
+      "sufficiency_match": true,
+      "answer": "Mock answer to: How does the agent use the existing RAG service and validate evidence?\n\nSources:\n- [`src/repo_agent/agent/service.py` lines 1-80](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L1-L80) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/agent/service.py` lines 651-730](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L651-L730) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/agent/service.py` lines 976-1036](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L976-L1036) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)",
+      "error_category": null,
+      "termination_reason": null,
+      "model_calls": 1,
+      "tool_calls": 0,
+      "retrieved_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_b8d82dc94f58110a2f31",
+        "chunk_506ffb5931169e4c06fd",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_203d08a8db28b4f53eb2",
+        "chunk_1162ad288c5145ed2e45",
+        "chunk_ce5ebafa84e46a223f9f",
+        "chunk_5ee55c840821bdb85f59",
+        "chunk_8879d1ced98c08128c2d",
+        "chunk_1994f1e733e2b79416d6"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_b8d82dc94f58110a2f31",
+        "chunk_506ffb5931169e4c06fd",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_203d08a8db28b4f53eb2",
+        "chunk_1162ad288c5145ed2e45",
+        "chunk_ce5ebafa84e46a223f9f",
+        "chunk_5ee55c840821bdb85f59"
+      ],
+      "citation_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_b8d82dc94f58110a2f31",
+        "chunk_506ffb5931169e4c06fd"
+      ],
+      "citations": [
+        {
+          "chunk_id": "chunk_7588bfa2e0bb010e43b5",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 1,
+          "end_line": 80,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_b8d82dc94f58110a2f31",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 651,
+          "end_line": 730,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_506ffb5931169e4c06fd",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 976,
+          "end_line": 1036,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        }
+      ],
+      "retrieved_files": [
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/rag/service.py",
+        "src/repo_agent/rag/index.py"
+      ],
+      "cited_files": [
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/agent/service.py"
+      ],
+      "expected_files_retrieved": [
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/rag/service.py"
+      ],
+      "expected_symbols_retrieved": [
+        "AgentOrchestrationService",
+        "RepositoryRAGService"
+      ],
+      "citation_valid": true,
+      "citation_relevant": false,
+      "unique_chunks": 10,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 7874,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.98425,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "agent-rag-relationship",
+      "mode": "agent",
+      "question": "How does the agent use the existing RAG service and validate evidence?",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [
+        {
+          "path": "src/repo_agent/agent/service.py",
+          "symbol": "AgentOrchestrationService",
+          "start_line": 206,
+          "end_line": 282
+        },
+        {
+          "path": "src/repo_agent/rag/service.py",
+          "symbol": "RepositoryRAGService",
+          "start_line": 34,
+          "end_line": 77
+        }
+      ],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": true,
+      "context_sufficient": true,
+      "sufficiency_match": true,
+      "answer": "Offline mock answer grounded in returned repository evidence.\n\nSources:\n- [`src/repo_agent/agent/service.py` lines 1-80](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L1-L80) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/agent/service.py` lines 651-730](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L651-L730) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)\n- [`src/repo_agent/agent/service.py` lines 976-1036](https://github.com/evaluation/github-ai-agent-fixture/blob/a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2/src/repo_agent/agent/service.py#L976-L1036) (commit `a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2`)",
+      "error_category": null,
+      "termination_reason": null,
+      "model_calls": 2,
+      "tool_calls": 1,
+      "retrieved_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_b8d82dc94f58110a2f31",
+        "chunk_506ffb5931169e4c06fd"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_b8d82dc94f58110a2f31",
+        "chunk_506ffb5931169e4c06fd"
+      ],
+      "citation_chunk_ids": [
+        "chunk_7588bfa2e0bb010e43b5",
+        "chunk_b8d82dc94f58110a2f31",
+        "chunk_506ffb5931169e4c06fd"
+      ],
+      "citations": [
+        {
+          "chunk_id": "chunk_7588bfa2e0bb010e43b5",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 1,
+          "end_line": 80,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_b8d82dc94f58110a2f31",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 651,
+          "end_line": 730,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        },
+        {
+          "chunk_id": "chunk_506ffb5931169e4c06fd",
+          "path": "src/repo_agent/agent/service.py",
+          "start_line": 976,
+          "end_line": 1036,
+          "commit_sha": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2"
+        }
+      ],
+      "retrieved_files": [
+        "src/repo_agent/agent/service.py"
+      ],
+      "cited_files": [
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/agent/service.py"
+      ],
+      "expected_files_retrieved": [
+        "src/repo_agent/agent/service.py"
+      ],
+      "expected_symbols_retrieved": [],
+      "citation_valid": true,
+      "citation_relevant": false,
+      "unique_chunks": 3,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 3128,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.391,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "negative-missing-evidence",
+      "mode": "rag",
+      "question": "Where is the fictional function zz_eval_missing_symbol_79c31 implemented?",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": false,
+      "context_sufficient": false,
+      "sufficiency_match": true,
+      "answer": "The retrieved repository evidence is insufficient. The available repository evidence is insufficient to establish this claim.",
+      "error_category": null,
+      "termination_reason": "insufficient_repository_evidence",
+      "model_calls": 1,
+      "tool_calls": 0,
+      "retrieved_chunk_ids": [
+        "chunk_1994f1e733e2b79416d6",
+        "chunk_8879d1ced98c08128c2d",
+        "chunk_4f959e4fd94c8602020c",
+        "chunk_1162ad288c5145ed2e45",
+        "chunk_f6fc6ad0a4da4754d2cb",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_f482ce135ac8b4c887f9",
+        "chunk_6a408882766fa0163c85",
+        "chunk_5ee55c840821bdb85f59",
+        "chunk_b8d82dc94f58110a2f31"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_1994f1e733e2b79416d6",
+        "chunk_8879d1ced98c08128c2d",
+        "chunk_4f959e4fd94c8602020c",
+        "chunk_1162ad288c5145ed2e45",
+        "chunk_f6fc6ad0a4da4754d2cb",
+        "chunk_dc5d6376b6df5aab565f",
+        "chunk_f482ce135ac8b4c887f9"
+      ],
+      "citation_chunk_ids": [],
+      "citations": [],
+      "retrieved_files": [
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/rag/index.py",
+        "src/repo_agent/rag/service.py"
+      ],
+      "cited_files": [],
+      "expected_files_retrieved": [],
+      "expected_symbols_retrieved": [],
+      "citation_valid": true,
+      "citation_relevant": null,
+      "unique_chunks": 10,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 7901,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.987625,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    },
+    {
+      "case_id": "negative-missing-evidence",
+      "mode": "agent",
+      "question": "Where is the fictional function zz_eval_missing_symbol_79c31 implemented?",
+      "repository_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "expected_sources": [],
+      "observed_commit": "a2da9850fdd1fe8a9bb4ae016a30b3f662f90fa2",
+      "completed": true,
+      "expected_sufficient": false,
+      "context_sufficient": false,
+      "sufficiency_match": true,
+      "answer": "The tool results do not provide sufficient repository evidence. The available repository evidence is insufficient to establish this claim.",
+      "error_category": "agent_insufficient_evidence",
+      "termination_reason": null,
+      "model_calls": 2,
+      "tool_calls": 1,
+      "retrieved_chunk_ids": [
+        "chunk_1994f1e733e2b79416d6",
+        "chunk_8879d1ced98c08128c2d",
+        "chunk_4f959e4fd94c8602020c"
+      ],
+      "prompt_chunk_ids": [
+        "chunk_1994f1e733e2b79416d6",
+        "chunk_8879d1ced98c08128c2d",
+        "chunk_4f959e4fd94c8602020c"
+      ],
+      "citation_chunk_ids": [],
+      "citations": [],
+      "retrieved_files": [
+        "src/repo_agent/agent/service.py",
+        "src/repo_agent/rag/index.py"
+      ],
+      "cited_files": [],
+      "expected_files_retrieved": [],
+      "expected_symbols_retrieved": [],
+      "citation_valid": true,
+      "citation_relevant": null,
+      "unique_chunks": 3,
+      "duplicate_chunks": 0,
+      "estimated_tokens": 3743,
+      "context_budget_tokens": 8000,
+      "context_budget_usage": 0.467875,
+      "human_review": {
+        "rating": null,
+        "notes": ""
+      }
+    }
+  ]
+}
